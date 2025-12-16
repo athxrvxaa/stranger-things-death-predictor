@@ -1,12 +1,11 @@
 # ============================================================
-# Stranger Things: Death Probability Predictor
-# Entertainment-only ML demo using Logistic Regression
+# Stranger Things — Season 5 Volume 2 Survival Predictor
+# Fan-theory ML simulation using Logistic Regression
 # ============================================================
 
 import streamlit as st
 import numpy as np
 import random
-import time
 from PIL import Image
 from sklearn.linear_model import LogisticRegression
 
@@ -14,37 +13,47 @@ from sklearn.linear_model import LogisticRegression
 # PAGE CONFIG
 # ------------------------------------------------------------
 st.set_page_config(
-    page_title="Stranger Things: Death Probability Predictor",
+    page_title="Stranger Things S5 Vol. 2 Predictor",
     layout="wide"
 )
 
-st.title("☠️ Stranger Things: Death Probability Predictor")
-st.caption("⚠️ Entertainment-only ML model (Logistic Regression)")
+st.title("☠️ Stranger Things — Season 5 Volume 2 Survival Predictor")
+
+st.caption(
+    "⚠️ Fan-theory based ML simulation for Season 5 Volume 2. "
+    "Not official, not canon, purely for entertainment."
+)
+
+st.info(
+    "This app simulates *possible* Season 5 Volume 2 outcomes using "
+    "narrative risk factors like plot armor, danger exposure, and "
+    "villain proximity. It does NOT use real scripts, leaks, or Netflix data."
+)
 
 # ------------------------------------------------------------
-# GEN-ALPHA EXPLANATION FUNCTION
+# EXPLANATION FUNCTION (FINAL SEASON LOGIC)
 # ------------------------------------------------------------
 def generate_reasons(c):
     reasons = []
 
     if c["powers"]:
-        reasons.append("• Has OP powers, which puts them in danger basically every episode.")
+        reasons.append("• Carries a major supernatural burden going into the final arc.")
 
     if c["danger_level"] >= 3:
-        reasons.append("• Constantly does risky stuff — survival instincts are kinda questionable.")
+        reasons.append("• Frequently placed on the frontline during Season 5 conflicts.")
 
     if c["villain_proximity"] >= 3:
-        reasons.append("• Always way too close to the main villain. Huge red flag.")
+        reasons.append("• Closely tied to Vecna / Upside Down endgame events.")
 
     if c["plot_armor"] >= 3:
-        reasons.append("• Heavy plot armor — writers might save them at the last second.")
+        reasons.append("• Strong narrative protection for the series finale.")
     else:
-        reasons.append("• Plot armor is weak… chances are looking sus.")
+        reasons.append("• Limited plot armor in a finale season raises fatal stakes.")
 
     return reasons[:3]
 
 # ------------------------------------------------------------
-# CHARACTER DATA (TOP 10 WITH VARIANCE)
+# CHARACTER DATA (SEASON 5 CONTEXT)
 # scale: 1 = low, 3 = high
 # ------------------------------------------------------------
 characters = [
@@ -155,7 +164,7 @@ characters = [
 # ------------------------------------------------------------
 X, y = [], []
 
-for _ in range(2500):
+for _ in range(3000):
     powers = random.randint(0, 1)
     screen = random.randint(0, 1)
     fan = random.randint(0, 1)
@@ -164,40 +173,41 @@ for _ in range(2500):
     villain = random.randint(1, 3)
 
     risk_score = (
-        powers * 0.5
-        + danger * 0.7
-        + villain * 0.8
-        - armor * 0.9
-        - fan * 0.4
+        powers * 0.6
+        + danger * 0.8
+        + villain * 0.9
+        - armor * 1.0
+        - fan * 0.5
         + random.uniform(-0.3, 0.3)
     )
 
     X.append([powers, screen, fan, danger, armor, villain])
-    y.append(1 if risk_score > 1.6 else 0)
+    y.append(1 if risk_score > 1.5 else 0)
 
 model = LogisticRegression()
 model.fit(X, y)
 
 # ------------------------------------------------------------
-# SIDEBAR
+# SIDEBAR CONTROLS
 # ------------------------------------------------------------
-st.sidebar.header("🎛️ Fan Voting Controls")
+st.sidebar.header("🎛️ Finale Scenario Controls")
 
 fan_bias = st.sidebar.slider(
-    "Fan protection bias (← safer | danger →)",
+    "Fan protection bias (← safer | darker ending →)",
     -0.30,
     0.30,
     0.0,
     0.05,
 )
 
-st.sidebar.markdown("""
-**Model Info**
-- Logistic Regression  
-- Expanded feature space  
-- Synthetic training data  
-- Animated probabilities  
-""")
+dark_ending = st.sidebar.checkbox("Enable Dark Ending Scenario", False)
+
+if dark_ending:
+    fan_bias -= 0.15
+
+st.sidebar.caption(
+    "Dark Ending = higher fatality risk, minimal plot armor."
+)
 
 # ------------------------------------------------------------
 # PREDICTIONS
@@ -205,7 +215,7 @@ st.sidebar.markdown("""
 results = []
 
 for c in characters:
-    features = np.array([[
+    features = np.array([[ 
         c["powers"],
         c["screen_time"],
         c["fan_favorite"],
@@ -215,7 +225,7 @@ for c in characters:
     ]])
 
     prob = model.predict_proba(features)[0][1]
-    prob = max(0.03, min(prob + fan_bias, 0.95))
+    prob = max(0.05, min(prob + fan_bias, 0.95))
 
     results.append({**c, "probability": prob})
 
@@ -224,6 +234,12 @@ results.sort(key=lambda x: x["probability"], reverse=True)
 # ------------------------------------------------------------
 # DISPLAY
 # ------------------------------------------------------------
+st.header("📺 Season 5 Volume 2 — Predicted Risk Ranking")
+st.markdown(
+    "Final-season survival simulation based on character arcs, narrative stakes, "
+    "and Upside Down endgame proximity."
+)
+
 for idx, c in enumerate(results, start=1):
     col1, col2 = st.columns([1, 3])
 
@@ -231,18 +247,18 @@ for idx, c in enumerate(results, start=1):
         try:
             img = Image.open(c["image"])
             st.image(img, use_container_width=True)
-        except Exception as e:
-            st.error(f"Image error: {e}")
+        except Exception:
+            st.warning("Image not available")
 
     with col2:
         st.subheader(f"#{idx} — {c['name']}")
 
-        bar = st.progress(0)
-        for i in range(int(c["probability"] * 100)):
-            time.sleep(0.004)
-            bar.progress(i + 1)
+        st.progress(int(c["probability"] * 100))
 
-        st.write(f"**Predicted Death Probability:** `{int(c['probability'] * 100)}%`")
+        st.write(
+            f"**Season 5 Vol. 2 Death Risk:** "
+            f"`{int(c['probability'] * 100)}%`"
+        )
 
         st.markdown("**Why this prediction:**")
         for reason in generate_reasons(c):
